@@ -1,0 +1,61 @@
+pipeline {
+    agent any  // Run on any available agent (can change to 'label' or 'docker')
+
+    environment {
+        // Set environment variables (optional)
+        NODE_ENV = 'production'
+    }
+
+    options {
+        // Optional: Keep the last 10 builds
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        // Show timestamps in logs
+        timestamps()
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Automatically checks out the source code from SCM
+                checkout scm
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                // Run shell commands (Linux/macOS)
+                sh 'npm install'
+
+                // For Windows, use 'bat' instead:
+                // bat 'npm install'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'npm run build'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'npm test'
+            }
+        }
+
+        stage('Archive Artifacts') {
+            steps {
+                archiveArtifacts artifacts: 'dist/**', allowEmptyArchive: true
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build completed successfully!'
+        }
+        failure {
+            echo 'Build failed!'
+        }
+    }
+}
